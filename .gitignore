@@ -1,0 +1,18 @@
+#  Local .terraform directories
+**/.terraform/*
+**/.terragrunt-cache/*
+**/.t/*
+**/.cache/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars files
+*.tfvars
+
+# Terragrunt debug files
+**/terragrunt-debug.tfvars.json
+
+# DS Store
+**/.DS_Store

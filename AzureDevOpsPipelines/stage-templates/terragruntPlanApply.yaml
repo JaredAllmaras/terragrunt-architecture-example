@@ -1,0 +1,149 @@
+parameters:
+  - name: tfApply
+    displayName: 'Apply Terraform Changes'
+    type: boolean
+    default: false
+
+  - name: configurationName
+    type: string
+
+  - name: configurationType
+    type: string
+
+  - name: environmentName
+    type: string
+
+  - name: pool
+    type: string
+
+stages:
+  - stage: ${{ replace(parameters.environmentName, '-', '_') }}
+    displayName: ${{ parameters.environmentName }}
+    pool:
+      name: ${{ parameters.pool }}
+    jobs:
+      - job: plan
+        displayName: 'Preview Changes'
+        steps:
+          - checkout: none
+
+          - download: current
+            displayName: Download Pipeline Artifacts
+
+          - task: TerraformInstaller@0
+            displayName: Install Terraform
+            inputs:
+              terraformVersion: '1.1.7'
+
+          - task: installTerragrunt@0
+            displayName: Install Terragrunt
+            inputs:
+              terragruntversion: '0.35.9'
+
+          - task: AzureCLI@2
+            displayName: 'Terragrunt Plan'
+            inputs:
+              azureSubscription: '${{ parameters.environmentName }}-ado-sc'
+              scriptType: 'ps'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                $env:ARM_CLIENT_ID = $env:servicePrincipalId
+                $env:ARM_CLIENT_SECRET = $env:servicePrincipalKey 
+                $env:ARM_SUBSCRIPTION_ID = convertfrom-json (az account list --query "[?isDefault].id | [0]")
+                $env:ARM_TENANT_ID = $env:tenantId
+                $env:TF_VAR_deployedBy = "$(Build.RequestedForEmail)"
+                $env:TF_VAR_deployedTime =  get-date -format "yyyy'-'MM'-'dd'T'HH':'mm':'ss"
+
+                $env:TF_DATA_DIR = ".\.t\"
+                $env:TERRAGRUNT_DOWNLOAD = "C:\.tg\"
+                
+                $env:TERRAGRUNT_SOURCE = "$(Pipeline.Workspace)\terragrunt-example-architecture\\IaC\configurations\${{ parameters.configurationType }}\${{ parameters.configurationName }}"
+                
+                cd terragrunt-example-architecture\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
+                
+                terragrunt init -input=false
+                
+                Invoke-Expression -Command "terragrunt plan -input=false -no-color" | Tee-Object -Variable planOutput
+                $planOutput = $planOutput -replace "'", "''"
+                $planOutput = [string]::Join("[NEWLINE]", $planOutput)
+                Write-Host "##vso[task.setvariable variable=planOutput]$planOutput"
+              addSpnToEnvironment: true
+              workingDirectory: '$(Pipeline.Workspace)'
+              failOnStandardError: true
+
+          - task: Powershell@2
+            displayName: 'Comment PR'
+            condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            inputs:
+              targetType: 'inline'
+              script: |
+                $pullRequestId = $env:SYSTEM_PULLREQUEST_PULLREQUESTID
+                $repositoryId = $env:BUILD_REPOSITORY_ID
+                $projectName = $env:SYSTEM_TEAMPROJECT
+                $organizationUri = $env:SYSTEM_COLLECTIONURI
+                $buildId = $env:BUILD_BUILDID
+                $SystemAccessToken = $env:SYSTEM_ACCESSTOKEN
+                $planOutput = '$(planOutput)'
+                & $(Pipeline.Workspace)\terragrunt-example-architecture\AzureDevOpsPipelines\pipeline-scripts\pullRequestComment.ps1 -OrganizationUri $organizationUri -Project $projectName -RepositoryId $repositoryId -PullRequestId $pullRequestId -BuildId $buildId -PlanOutput $planOutput
+
+              workingDirectory: '$(Pipeline.Workspace)'
+              failOnStandardError: true
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      - job: approve
+        condition: and(or(eq('True', ${{ parameters.tfApply }} ),ne(variables['Build.Reason'], 'Manual')),ne(variables['Build.Reason'], 'PullRequest'),eq('refs/heads/main', variables['Build.SourceBranch']))
+        displayName: 'Approve Changes'
+        pool: server
+        dependsOn: plan
+        steps:
+          - task: ManualValidation@0
+            condition: or(eq('${{ parameters.environmentName }}', 'staging'), eq('${{ parameters.environmentName }}', 'production'))
+            timeoutInMinutes: 60
+            inputs:
+              instructions: 'Please review Plan and Approve Changes'
+
+      - deployment: apply
+        displayName: 'Apply Changes'
+        condition: and(succeeded(), or(eq('True', ${{ parameters.tfApply }} ), ne(variables['Build.Reason'], 'Manual')), ne(variables['Build.Reason'], 'PullRequest'), eq('refs/heads/main', variables['Build.SourceBranch']))
+        environment: ${{ parameters.environmentName }}
+        dependsOn: approve
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@0
+                  displayName: Install Terraform
+                  inputs:
+                    terraformVersion: '1.1.7'
+
+                - task: installTerragrunt@0
+                  displayName: Install Terragrunt
+                  inputs:
+                    terragruntversion: '0.35.9'
+                    
+                - task: AzureCLI@2
+                  displayName: 'Terragrunt Apply'
+                  inputs:
+                    azureSubscription: '${{ parameters.environmentName }}-ado-sc'
+                    scriptType: 'ps'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      $env:ARM_CLIENT_ID = $env:servicePrincipalId
+                      $env:ARM_CLIENT_SECRET = $env:servicePrincipalKey 
+                      $env:ARM_SUBSCRIPTION_ID = convertfrom-json (az account list --query "[?isDefault].id | [0]")
+                      $env:ARM_TENANT_ID = $env:tenantId
+                      $env:TF_VAR_deployedBy = "$(Build.RequestedForEmail)"
+                      $env:TF_VAR_deployedTime =  get-date -format "yyyy'-'MM'-'dd'T'HH':'mm':'ss"
+
+                      $env:TF_DATA_DIR = ".\.t\"
+                      $env:TERRAGRUNT_DOWNLOAD = "C:\.tg\"
+                      
+                      $env:TERRAGRUNT_SOURCE = "$(Pipeline.Workspace)\terragrunt-example-architecture\\IaC\configurations\${{ parameters.configurationType }}\${{ parameters.configurationName }}"
+                      
+                      cd terragrunt-example-architecture\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
+                      
+                      terragrunt init -input=false
+                      terragrunt apply -input=false  -auto-approve
+                    addSpnToEnvironment: true
+                    workingDirectory: '$(Pipeline.Workspace)'
+                    failOnStandardError: true

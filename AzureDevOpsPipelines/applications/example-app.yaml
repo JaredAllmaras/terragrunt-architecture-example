@@ -1,0 +1,25 @@
+parameters:
+  - name: tfApply
+    displayName: 'Apply Terraform Changes'
+    type: boolean
+    default: false
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - AzureDevOpsPipelines/applications/example-app.yaml
+      - IaC/configurations/applications/example-app
+      - IaC/terragrunt/configurations/applications/example-app.hcl
+extends:
+  template: ../pipeline-templates/terragrunt.yaml
+  parameters:
+    tfApply: ${{ parameters.tfApply }}
+    configurationName: example-app
+    configurationType: applications
+    environments:
+      - name: dev
+      - name: test
+      - name: staging
+      - name: production

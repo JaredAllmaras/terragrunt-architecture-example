@@ -1,0 +1,38 @@
+parameters:
+  - name: tfApply
+    displayName: 'Apply Terraform Changes'
+    type: boolean
+    default: false
+
+  - name: configurationName
+    displayName: 'Name of Terraform Configuration to Deploy'
+    type: string
+
+  - name: configurationType
+    displayName: 'Type of Terraform Configuration to Deploy'
+    type: string
+
+  - name: environments
+    displayName: 'List of Environments to Deploy To'
+    type: object
+
+stages:
+- stage: publish
+  displayName: Publish Artifacts
+  pool:
+    name: IaC-agent-pool
+  jobs:
+  - job: publish
+    displayName: Publish Artifacts
+    steps:
+    - publish: $(Build.SourcesDirectory)
+      artifact: chl-terraform
+
+- ${{ each environment in parameters.environments }}:
+  - template: ../stage-templates/terragruntPlanApply.yaml
+    parameters:
+      tfApply: ${{ parameters.tfApply }}
+      environmentName: ${{ environment.name }}
+      configurationName: ${{ parameters.configurationName }}
+      configurationType: ${{ parameters.configurationType }}
+      pool: IaC-agent-pool

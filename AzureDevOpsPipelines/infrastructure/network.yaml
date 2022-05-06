@@ -1,0 +1,27 @@
+parameters:
+  - name: tfApply
+    displayName: 'Apply Terraform Changes'
+    type: boolean
+    default: false
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - AzureDevOpsPipelines/infrastructure/network.yaml
+      - IaC/configurations/infrastructure/network
+      - IaC/terragrunt/configurations/infrastructure/network.hcl
+
+extends:
+  template: ../pipeline-templates/terragrunt.yaml
+  parameters:
+    tfApply: ${{ parameters.tfApply }}
+    configurationName: network
+    configurationType: infrastructure
+    environments:
+      - name: dev
+      - name: test
+      - name: staging
+      - name: production
