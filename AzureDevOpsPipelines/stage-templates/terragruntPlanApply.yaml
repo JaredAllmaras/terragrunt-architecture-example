@@ -97,7 +97,7 @@ stages:
         dependsOn: plan
         steps:
           - task: ManualValidation@0
-            condition: or(eq('${{ parameters.environmentName }}', 'staging'), eq('${{ parameters.environmentName }}', 'production'))
+            condition: or(eq('${{ parameters.environmentName }}', 'staging'), eq('${{ parameters.environmentName }}', 'production'),'${{ parameters.environmentName }}', 'test'), eq('${{ parameters.environmentName }}', 'dev'))
             timeoutInMinutes: 60
             inputs:
               instructions: 'Please review Plan and Approve Changes'
