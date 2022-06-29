@@ -38,7 +38,7 @@ stages:
           - task: installTerragrunt@0
             displayName: Install Terragrunt
             inputs:
-              terragruntversion: '0.35.9'
+              terragruntversion: '0.38.2'
 
           - task: AzureCLI@2
             displayName: 'Terragrunt Plan'
