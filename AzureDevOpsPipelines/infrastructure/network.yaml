@@ -22,6 +22,3 @@ extends:
     configurationType: infrastructure
     environments:
       - name: dev
-      - name: test
-      - name: staging
-      - name: production
