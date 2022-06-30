@@ -59,7 +59,7 @@ stages:
                 
                 $env:TERRAGRUNT_SOURCE = "$(Pipeline.Workspace)\terragrunt-architecture-example\\IaC\configurations\${{ parameters.configurationType }}\${{ parameters.configurationName }}"
                 
-                cd terragrunt-architecture-example\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
+                cd ex-artifact\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
                 
                 terragrunt init -input=false
                 
@@ -140,7 +140,7 @@ stages:
                       
                       $env:TERRAGRUNT_SOURCE = "$(Pipeline.Workspace)\terragrunt-architecture-example\\IaC\configurations\${{ parameters.configurationType }}\${{ parameters.configurationName }}"
                       
-                      cd terragrunt-architecture-example\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
+                      cd ex-artifact\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
                       
                       terragrunt init -input=false
                       terragrunt apply -input=false  -auto-approve
