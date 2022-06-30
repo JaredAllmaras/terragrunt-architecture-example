@@ -57,9 +57,9 @@ stages:
                 $env:TF_DATA_DIR = ".\.t\"
                 $env:TERRAGRUNT_DOWNLOAD = "C:\.tg\"
                 
-                $env:TERRAGRUNT_SOURCE = "$(Pipeline.Workspace)\terragrunt-example-architecture\\IaC\configurations\${{ parameters.configurationType }}\${{ parameters.configurationName }}"
+                $env:TERRAGRUNT_SOURCE = "$(Pipeline.Workspace)\terragrunt-architecture-example\\IaC\configurations\${{ parameters.configurationType }}\${{ parameters.configurationName }}"
                 
-                cd terragrunt-example-architecture\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
+                cd terragrunt-architecture-example\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
                 
                 terragrunt init -input=false
                 
@@ -84,7 +84,7 @@ stages:
                 $buildId = $env:BUILD_BUILDID
                 $SystemAccessToken = $env:SYSTEM_ACCESSTOKEN
                 $planOutput = '$(planOutput)'
-                & $(Pipeline.Workspace)\terragrunt-example-architecture\AzureDevOpsPipelines\pipeline-scripts\pullRequestComment.ps1 -OrganizationUri $organizationUri -Project $projectName -RepositoryId $repositoryId -PullRequestId $pullRequestId -BuildId $buildId -PlanOutput $planOutput
+                & $(Pipeline.Workspace)\terragrunt-architecture-example\AzureDevOpsPipelines\pipeline-scripts\pullRequestComment.ps1 -OrganizationUri $organizationUri -Project $projectName -RepositoryId $repositoryId -PullRequestId $pullRequestId -BuildId $buildId -PlanOutput $planOutput
 
               workingDirectory: '$(Pipeline.Workspace)'
               failOnStandardError: true
@@ -138,9 +138,9 @@ stages:
                       $env:TF_DATA_DIR = ".\.t\"
                       $env:TERRAGRUNT_DOWNLOAD = "C:\.tg\"
                       
-                      $env:TERRAGRUNT_SOURCE = "$(Pipeline.Workspace)\terragrunt-example-architecture\\IaC\configurations\${{ parameters.configurationType }}\${{ parameters.configurationName }}"
+                      $env:TERRAGRUNT_SOURCE = "$(Pipeline.Workspace)\terragrunt-architecture-example\\IaC\configurations\${{ parameters.configurationType }}\${{ parameters.configurationName }}"
                       
-                      cd terragrunt-example-architecture\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
+                      cd terragrunt-architecture-example\IaC\terragrunt\environment\${{ parameters.environmentName }}\${{ parameters.configurationType }}\${{ parameters.configurationName }}
                       
                       terragrunt init -input=false
                       terragrunt apply -input=false  -auto-approve
