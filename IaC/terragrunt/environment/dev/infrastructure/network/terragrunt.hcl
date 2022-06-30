@@ -1,3 +1,3 @@
 include {
-  path = "${find_in_parent_folders("configurations")}/applications/network.hcl"
+  path = "${find_in_parent_folders("configurations")}/infrastructure/network.hcl"
 }
