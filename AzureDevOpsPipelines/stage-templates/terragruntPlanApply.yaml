@@ -20,7 +20,7 @@ stages:
   - stage: ${{ replace(parameters.environmentName, '-', '_') }}
     displayName: ${{ parameters.environmentName }}
     pool:
-      name: windows-latest
+      vmImage: 'windows-latest'
     jobs:
       - job: plan
         displayName: 'Preview Changes'
